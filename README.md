@@ -48,6 +48,8 @@ Send some read requests to warm up the application using Apache Benchmark (ab). 
 docker exec -it $(docker ps -a -q --filter name=clustered-index-benchmark-web-server) ab -n 1000 -c 10 http://localhost:8001/read_with_index && docker exec -it $(docker ps -a -q --filter name=clustered-index-benchmark-web-server) ab -n 1000 -c 10 http://localhost:8001/read_without_index && docker exec -it $(docker ps -a -q --filter name=clustered-index-benchmark-web-server) ab -n 1 -c 1 http://localhost:8001/clear
 ```
 
+> If chained commands don't run, just execute one by one.
+
 ### 5. Benchmark
 Run the benchmark with the following commands:
 
