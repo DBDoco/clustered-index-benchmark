@@ -68,8 +68,7 @@ def create_app():
         # Return JSON response with result, duration, and data count
         return jsonify({
             "result": "Read with index complete",
-            "duration": duration,
-            "data_count": len(data_items),
+            "duration": duration
         })
 
     # Define a route for reading data without a clustered index
@@ -94,9 +93,8 @@ def create_app():
         # Return JSON response with result, duration, and data count
         return jsonify({
             "result": "Read without index complete",
-            "duration": duration,
-            "data_count": len(data_items),
-        })
+            "duration": duration
+            })
     
     @app.route('/write_with_index')
     def write_with_index():
