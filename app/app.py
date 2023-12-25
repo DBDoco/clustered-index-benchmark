@@ -36,15 +36,20 @@ def create_app():
     db.Index('idx_key', DataItem.key)
 
     # Initialize lists to store durations and data counts for two scenarios
-    durations_with_index = []
-    data_counts_with_index = []
-    durations_without_index = []
-    data_counts_without_index = []
+    durations_with_index_read = []
+    data_counts_with_index_read = []
+    durations_without_index_read = []
+    data_counts_without_index_read = []
+
+    durations_with_index_write = []
+    data_counts_with_index_write = []
+    durations_without_index_write = []
+    data_counts_without_index_write = []
 
     # Define a route for reading data with a clustered index
     @app.route('/read_with_index')
     def read_with_index():
-        nonlocal durations_with_index, data_counts_with_index
+        nonlocal durations_with_index_read, data_counts_with_index_read
 
         # Record the start time for measuring duration
         start_time = time.time() * 1000
@@ -57,33 +62,25 @@ def create_app():
         duration = end_time - start_time
 
         # Store duration and data count
-        durations_with_index.append(duration)
-        data_counts_with_index.append(len(data_items))
-
-        # Add fake data items to the database for testing
-        fake_data_items = []
-        for _ in range(100):
-            key = fake.uuid4()
-            data_item = DataItem(key=key, value=fake.text())
-            db.session.add(data_item)
-            fake_data_items.append({"key": data_item.key, "value": data_item.value})
+        durations_with_index_read.append(duration)
+        data_counts_with_index_read.append(len(data_items))
 
         # Return JSON response with result, duration, and data count
         return jsonify({
             "result": "Read with index complete",
             "duration": duration,
-            "data_count": len(fake_data_items),
+            "data_count": len(data_items),
         })
 
     # Define a route for reading data without a clustered index
     @app.route('/read_without_index')
     def read_without_index():
-        nonlocal durations_without_index, data_counts_without_index
+        nonlocal durations_without_index_read, data_counts_without_index_read
 
         # Record the start time for measuring duration
         start_time = time.time() * 1000
 
-        # Query data items with a fake text and measure duration
+        # Query data items from the database with a fake text and measure duration
         data_items = DataItem.query.filter_by(value=fake.text()).all()
 
         # Record the end time and calculate duration
@@ -91,10 +88,24 @@ def create_app():
         duration = end_time - start_time
 
         # Store duration and data count
-        durations_without_index.append(duration)
-        data_counts_without_index.append(len(data_items))
+        durations_without_index_read.append(duration)
+        data_counts_without_index_read.append(len(data_items))
 
-        # Add fake data items to the database for testing
+        # Return JSON response with result, duration, and data count
+        return jsonify({
+            "result": "Read without index complete",
+            "duration": duration,
+            "data_count": len(data_items),
+        })
+    
+    @app.route('/write_with_index')
+    def write_with_index():
+        nonlocal durations_with_index_write, data_counts_with_index_write
+
+        # Record the start time for measuring duration
+        start_time = time.time() * 1000
+
+        # Add fake data items to the database with a fake UUID for testing
         fake_data_items = []
         for _ in range(100):
             key = fake.uuid4()
@@ -102,9 +113,54 @@ def create_app():
             db.session.add(data_item)
             fake_data_items.append({"key": data_item.key, "value": data_item.value})
 
+        # Commit the changes to the database
+        db.session.commit()
+
+        # Record the end time and calculate duration
+        end_time = time.time() * 1000
+        duration = end_time - start_time
+
+        # Store duration and data count
+        durations_with_index_write.append(duration)
+        data_counts_with_index_write.append(len(fake_data_items))
+
         # Return JSON response with result, duration, and data count
         return jsonify({
-            "result": "Read without index complete",
+            "result": "Write with index complete",
+            "duration": duration,
+            "data_count": len(fake_data_items),
+        })
+
+    # Define a route for writing data without a clustered index
+    @app.route('/write_without_index')
+    def write_without_index():
+        nonlocal durations_without_index_write, data_counts_without_index_write
+
+        # Record the start time for measuring duration
+        start_time = time.time() * 1000
+
+        # Add fake data items to the database with a fake UUID for testing
+        fake_data_items = []
+        for _ in range(100):
+            key = fake.uuid4()
+            data_item = DataItem(key=key, value=fake.text())
+            db.session.add(data_item)
+            fake_data_items.append({"key": data_item.key, "value": data_item.value})
+
+        # Commit the changes to the database
+        db.session.commit()
+
+        # Record the end time and calculate duration
+        end_time = time.time() * 1000
+        duration = end_time - start_time
+
+        # Store duration and data count
+        durations_without_index_write.append(duration)
+        data_counts_without_index_write.append(len(fake_data_items))
+
+        # Return JSON response with result, duration, and data count
+        return jsonify({
+            "result": "Write without index complete",
             "duration": duration,
             "data_count": len(fake_data_items),
         })
@@ -112,33 +168,56 @@ def create_app():
     # Define a route for generating and serving a performance comparison plot
     @app.route('/get_plot')
     def get_plot():
-        nonlocal durations_with_index, durations_without_index
+        nonlocal durations_with_index_read, durations_without_index_read, durations_with_index_write, durations_without_index_write
 
-        # Calculate average and median durations for both scenarios
-        avg_with_index = np.mean(durations_with_index)
-        median_with_index = np.median(durations_with_index)
-        avg_without_index = np.mean(durations_without_index)
-        median_without_index = np.median(durations_without_index)
+        # Calculate average and median durations for read scenarios
+        avg_with_index_read = np.mean(durations_with_index_read)
+        median_with_index_read = np.median(durations_with_index_read)
+        avg_without_index_read = np.mean(durations_without_index_read)
+        median_without_index_read = np.median(durations_without_index_read)
+
+        # Calculate average and median durations for write scenarios
+        avg_with_index_write = np.mean(durations_with_index_write)
+        median_with_index_write = np.median(durations_with_index_write)
+        avg_without_index_write = np.mean(durations_without_index_write)
+        median_without_index_write = np.median(durations_without_index_write)
 
         # Create a static folder for storing generated plots
         static_folder = os.path.join(os.getcwd(), 'static')
         os.makedirs(static_folder, exist_ok=True)
 
-        # Create a bar plot for total, average, and median durations
-        plt.figure(figsize=(15, 5))
-        plt.subplot(1, 3, 1)
-        plt.bar(['With Index', 'Without Index'], [sum(durations_with_index), sum(durations_without_index)])
-        plt.title('Total Duration Comparison')
+        # Create a bar plot for total, average, and median durations for reads
+        plt.figure(figsize=(15, 10))
+
+        plt.subplot(2, 3, 1)
+        plt.bar(['With Index', 'Without Index'], [sum(durations_with_index_read), sum(durations_without_index_read)])
+        plt.title('Total Duration Comparison (Read)')
         plt.ylabel('Total Duration (ms)')
 
-        plt.subplot(1, 3, 2)
-        plt.bar(['With Index', 'Without Index'], [avg_with_index, avg_without_index])
-        plt.title('Average Duration Comparison')
+        plt.subplot(2, 3, 2)
+        plt.bar(['With Index', 'Without Index'], [avg_with_index_read, avg_without_index_read])
+        plt.title('Average Duration Comparison (Read)')
         plt.ylabel('Average Duration (ms)')
 
-        plt.subplot(1, 3, 3)
-        plt.bar(['With Index', 'Without Index'], [median_with_index, median_without_index])
-        plt.title('Median Duration Comparison')
+        plt.subplot(2, 3, 3)
+        plt.bar(['With Index', 'Without Index'], [median_with_index_read, median_without_index_read])
+        plt.title('Median Duration Comparison (Read)')
+        plt.ylabel('Median Duration (ms)')
+
+        # Create a bar plot for total, average, and median durations for writes
+        plt.subplot(2, 3, 4)
+        plt.bar(['With Index', 'Without Index'], [sum(durations_with_index_write), sum(durations_without_index_write)])
+        plt.title('Total Duration Comparison (Write)')
+        plt.ylabel('Total Duration (ms)')
+
+        plt.subplot(2, 3, 5)
+        plt.bar(['With Index', 'Without Index'], [avg_with_index_write, avg_without_index_write])
+        plt.title('Average Duration Comparison (Write)')
+        plt.ylabel('Average Duration (ms)')
+
+        plt.subplot(2, 3, 6)
+        plt.bar(['With Index', 'Without Index'], [median_with_index_write, median_without_index_write])
+        plt.title('Median Duration Comparison (Write)')
         plt.ylabel('Median Duration (ms)')
 
         plt.tight_layout()
@@ -154,14 +233,21 @@ def create_app():
     # Define a route for clearing stored durations
     @app.route('/clear')
     def clear_durations():
-        nonlocal durations_with_index, durations_without_index
+        nonlocal durations_with_index_read, durations_without_index_read, durations_with_index_write, durations_without_index_write
 
         # Clear stored durations for both scenarios
-        durations_with_index.clear()
-        durations_without_index.clear()
+        durations_with_index_read.clear()
+        durations_without_index_read.clear()
+        durations_with_index_write.clear()
+        durations_without_index_write.clear()
 
-        # Return JSON response indicating that durations are cleared
-        return jsonify({"result": "Durations cleared"})
+        # Clear the database
+        with app.app_context():
+            db.drop_all()
+            db.create_all()
+
+        # Return JSON response indicating that durations and database are cleared
+        return jsonify({"result": "Durations and database cleared"})
 
     # Return the Flask app instance
     return app

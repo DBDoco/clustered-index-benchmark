@@ -45,8 +45,10 @@ Verify that the endpoints are running by hitting the following URLs in your web 
 Send some read requests to warm up the application using Apache Benchmark (ab). Open a new terminal window and run the following commands:
 
 ```bash
-docker exec -it $(docker ps -a -q --filter name=experiment_project-web-server) ab -n 1000 -c 10 http://localhost:8001/read_with_index
-docker exec -it $(docker ps -a -q --filter name=experiment_project-web-server) ab -n 1000 -c 10 http://localhost:8001/read_without_index
+docker exec -it $(docker ps -a -q --filter name=experiment_project-web-server) ab -n 1000 -c 15 http://localhost:8001/write_with_index
+docker exec -it $(docker ps -a -q --filter name=experiment_project-web-server) ab -n 1000 -c 15 http://localhost:8001/write_without_index
+docker exec -it $(docker ps -a -q --filter name=experiment_project-web-server) ab -n 1000 -c 15 http://localhost:8001/read_with_index
+docker exec -it $(docker ps -a -q --filter name=experiment_project-web-server) ab -n 1000 -c 15 http://localhost:8001/read_without_index
 docker exec -it $(docker ps -a -q --filter name=experiment_project-web-server) ab -n 1 -c 1 http://localhost:8001/clear
 ```
 
@@ -56,8 +58,10 @@ docker exec -it $(docker ps -a -q --filter name=experiment_project-web-server) a
 Run the benchmark with the following commands:
 
 ```bash
-docker exec -it $(docker ps -a -q --filter name=experiment_project-web-server) ab -n 10000 -c 25 http://localhost:8001/read_with_index
-docker exec -it $(docker ps -a -q --filter name=experiment_project-web-server) ab -n 10000 -c 25 http://localhost:8001/read_without_index
+docker exec -it $(docker ps -a -q --filter name=experiment_project-web-server) ab -n 500 -c 25 http://localhost:8001/write_with_index
+docker exec -it $(docker ps -a -q --filter name=experiment_project-web-server) ab -n 500 -c 25 http://localhost:8001/write_without_index
+docker exec -it $(docker ps -a -q --filter name=experiment_project-web-server) ab -n 1000 -c 25 http://localhost:8001/read_with_index
+docker exec -it $(docker ps -a -q --filter name=experiment_project-web-server) ab -n 1000 -c 25 http://localhost:8001/read_without_index
 ```
 > Feel free to adjust the numbers in the command to experiment with different scenarios. More requests generally yield better results.
 
